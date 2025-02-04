@@ -1,0 +1,328 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Application
+    pimpleFoam
+
+Description
+    Transient solver for incompressible, turbulent flow of Newtonian fluids,
+    with optional mesh motion and mesh topology changes.
+
+    Turbulence modelling is generic, i.e. laminar, RAS or LES may be selected.
+
+\*---------------------------------------------------------------------------*/
+
+#include "fvCFD.H"
+#include "dynamicFvMesh.H"
+//#include "singlePhaseTransportModel.H"
+//#include "kinematicMomentumTransportModel.H"
+#include "pimpleControl.H"
+//#include "CorrectPhi.H"
+#include "fvOptions.H"
+//#include "localEulerDdtScheme.H"
+#include "fvcSmooth.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+int main(int argc, char *argv[])
+{
+    #include "postProcess.H"
+
+    #include "setRootCaseLists.H"
+    #include "createTime.H"
+    #include "createDynamicFvMesh.H"
+    #include "initContinuityErrs.H"
+    #include "createDyMControls.H"
+    #include "createFields.H"
+    #include "createUfIfPresent.H"
+
+  //turbulence->validate();
+
+
+        #include "CourantNo.H"
+        #include "setInitialDeltaT.H"
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    Info<< "\nStarting time loop\n" << endl;
+
+    while (runTime.loop())
+    {
+        #include "readDyMControls.H"
+      // correctPhi=true;
+
+            #include "CourantNo.H"
+            #include "setDeltaT.H"
+
+
+
+	mesh.update();
+
+	forAll(U, celli){
+	  U[celli].z() = 0.0;
+	  //	  	  gamma[celli] = gamma[celli]+1.0;
+	}
+
+		// Make the flux relative to the mesh motion
+	if (checkMeshCourantNo)
+	  {
+#include "meshCourantNo.H"
+	  }
+ 	fvVectorMatrix UEqn
+	  (
+	   //Buena
+	   //	   fvm::laplacian(Tr/4.0, U)
+	   fvm::laplacian(Tr/4.0+Theta, U)
+		   ==Ma*fvc::grad(gamma)
+	    -Theta*fvc::curl(fvc::curl(U)())
+	   //-Theta*fvc::grad(fvc::div(U))
+	   //  -Theta*(fvc::grad(fvc::div(U)) - fvc::laplacian(U))
+	   // -Tr/4.0*(2.0*fvc::div(diagT(gradU))-fvc::grad(fvc::div(U)))
+		  +   (Tr/4.0-1.0)*(2.0*fvc::div(NodiagT(gradU)))
+	   // -1.0*(2.0*fvc::div(NodiagT(gradU)))
+		   
+		   // fvm::laplacian(Tr/4.0, U)
+		   // ==Ma*fvc::grad(gamma)
+		   // //                      -Theta*fvc::curl(fvc::curl(U)())
+		   // -Theta*(fvc::grad(fvc::div(U)))
+		   // +   (Tr/4.0-1.0)*(2.0*fvc::div(NodiagT(gradU)))
+		   // fvm::laplacian(Theta - Tr/4.0, U)
+		   // ==Ma*fvc::grad(gamma)
+		   // -(Theta-Tr/4.0)*fvc::curl(fvc::curl(U)())
+		   // - (Tr/4.0)*(2.0*fvc::div(NodiagT(gradU))) - 2.0*fvc::div(diagT(gradU))
+   );
+
+	//	UEqn.relax();
+ UEqn.solve();
+ // adjustPhi(phi, U, gamma);
+	// forAll(U, celli){
+
+	//   	  gamma[celli] = gamma[celli]/100+1.0;
+	// }
+
+ 
+		forAll(U, celli){
+		  U[celli].z() = 0.0;
+		}
+
+		//		for (int nonOrth=0; nonOrth<=3; nonOrth++)
+		// {
+		phi = mesh.Sf() &  fvc::interpolate(U);
+		fvc::makeRelative(phi, U);
+		//adjustPhi(phi, U, gamma);
+
+
+		solve
+       (
+	fvm::ddt(gamma)  + fvm::div(phi, gamma) //-fvm::Sp(fvc::div(fvc::meshPhi(U)),gamma)
+	//  fv::EulerDdtScheme<scalar>(mesh).fvmDdt(gamma)+ fv::gaussConvectionScheme<scalar>(mesh, phi, upwind<scalar>(mesh, phi)).fvmDiv(phi, gamma)
+
+	);
+
+
+       //     gammaEqn.relax();
+       //gammaEqn.solve();
+ 		fvc::makeAbsolute(phi, U);
+
+
+ // 	fvVectorMatrix UEqn2
+ // 	  (
+ // 	   //Buena
+ // 	   //	   fvm::laplacian(Tr/4.0, U)
+ // 	   fvm::laplacian(Tr/4.0+Theta, U)
+ // 		   ==Ma*fvc::grad(gamma)
+ // 	   //-Theta*fvc::curl(fvc::curl(U)())
+ // 	   // -Theta*fvc::grad(fvc::div(U))
+ // 	     -Theta*(fvc::grad(fvc::div(U)) - fvc::laplacian(U))
+ // 	   // -Tr/4.0*(2.0*fvc::div(diagT(gradU))-fvc::grad(fvc::div(U)))
+ // 		   // +   (Tr/4.0-1.0)*(2.0*fvc::div(NodiagT(gradU)))
+ // 	   // -1.0*(2.0*fvc::div(NodiagT(gradU)))
+		   
+ // 		   // fvm::laplacian(Tr/4.0, U)
+ // 		   // ==Ma*fvc::grad(gamma)
+ // 		   // //                      -Theta*fvc::curl(fvc::curl(U)())
+ // 		   // -Theta*(fvc::grad(fvc::div(U)))
+ // 		   // +   (Tr/4.0-1.0)*(2.0*fvc::div(NodiagT(gradU)))
+ // 		   // fvm::laplacian(Theta - Tr/4.0, U)
+ // 		   // ==Ma*fvc::grad(gamma)
+ // 		   // -(Theta-Tr/4.0)*fvc::curl(fvc::curl(U)())
+ // 		   // - (Tr/4.0)*(2.0*fvc::div(NodiagT(gradU))) - 2.0*fvc::div(diagT(gradU))
+ //   );
+
+ // 	//	UEqn.relax();
+ // UEqn2.solve();
+ // // adjustPhi(phi, U, gamma);
+ // 	// forAll(U, celli){
+
+ // 	//   	  gamma[celli] = gamma[celli]/100+1.0;
+ // 	// }
+
+ 
+ // 		forAll(U, celli){
+ // 		  U[celli].z() = 0.0;
+ // 		}
+
+ // 		//		for (int nonOrth=0; nonOrth<=3; nonOrth++)
+ // 		// {
+ // 		phi = mesh.Sf() &  fvc::interpolate(U);
+ // 		fvc::makeRelative(phi, U);
+ // 		//adjustPhi(phi, U, gamma);
+
+
+ // 		solve
+ //       (
+ // 	fvm::ddt(gamma)  + fvm::div(phi, gamma) //-fvm::Sp(fvc::div(fvc::meshPhi(U)),gamma)
+ // 	//  fv::EulerDdtScheme<scalar>(mesh).fvmDdt(gamma)+ fv::gaussConvectionScheme<scalar>(mesh, phi, upwind<scalar>(mesh, phi)).fvmDiv(phi, gamma)
+
+ // 	);
+
+
+ //       //     gammaEqn.relax();
+ //       //gammaEqn.solve();
+ // 		fvc::makeAbsolute(phi, U);
+
+
+
+		//	}
+
+	 // forAll(U, celli){
+
+	 //   gamma[celli] = (gamma[celli]-1)*100;
+	 // }
+        
+        runTime.write();
+
+
+        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+            << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+            << nl << endl;
+      Info<< "Time = " << runTime.timeName() << nl << endl;
+
+	if (runTime.write()){
+	tmp<volTensorField> tgradU(fvc::grad(U));
+	const volTensorField& gradU = tgradU();
+
+     gammaTransport = fvc::div(U*gamma);
+	  tmp<volTensorField> tgradU2(fvc::grad(U));
+	  const volTensorField& gradU2 = tgradU2();
+	  label wallPatch = mesh.boundaryMesh().findPatchID("cylinder");
+
+
+	  IOField<vector> cfOut
+            (
+             IOobject
+             (
+              "cf",
+	      mesh.time().timeName(),
+	      mesh,
+	      IOobject::NO_READ,
+	      IOobject::NO_WRITE
+	      ),
+	     mesh.Cf().boundaryField()[wallPatch]
+	     // Sf ()normal   Cf center  magSf
+	     );
+
+	  cfOut.write();
+
+	  IOField<tensor> gradOut
+	    (
+               IOobject
+               (
+                "gradU",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+                ),
+               gradU2.boundaryField()[wallPatch]
+               // Sf ()normal   Cf center  magSf
+	     );
+
+	  gradOut.write();
+
+
+	  IOField<vector> SfOut
+	    (
+               IOobject
+               (
+                "sf",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+                ),
+               mesh.Sf().boundaryField()[wallPatch]
+               // Sf ()normal   Cf center  magSf
+	     );
+
+          SfOut.write();
+
+          IOField<scalar> magSf
+	    (
+               IOobject
+               (
+                "magsf",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+                ),
+               mesh.magSf().boundaryField()[wallPatch]
+               // Sf ()normal   Cf center  magSf
+	     );
+
+
+	  magSf.write();
+	 
+
+
+	  IOField<scalar> magGamma
+	    (
+               IOobject
+               (
+                "magGamma",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+                ),
+               gamma.boundaryField()[wallPatch]
+               // Sf ()normal   Cf center  magSf
+	     );
+
+
+	  magGamma.write();
+
+	}
+
+
+
+    }
+
+    Info<< "End\n" << endl;
+
+    return 0;
+}
+
+
+// ************************************************************************* //

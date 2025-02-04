@@ -1,0 +1,153 @@
+//#include "createRDeltaT.H"
+
+Info<< "Reading field p\n" << endl;
+volScalarField gamma
+(
+    IOobject
+    (
+        "gamma",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
+volScalarField angleV
+(
+    IOobject
+    (
+        "angleV",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
+
+volScalarField gammaTransport
+(
+    IOobject
+    (
+        "gammaTransport",
+        runTime.timeName(),
+        mesh,
+        IOobject::READ_IF_PRESENT,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+// volVectorField gradG
+//  (
+//             IOobject
+//             (
+// 	              "gradG",
+// 	              runTime.timeName(),
+// 	              mesh,
+// 	              IOobject::READ_IF_PRESENT,
+// 	              IOobject::AUTO_WRITE
+// 	           ),
+// 	    fvc::grad(gamma)
+//         );
+// volVectorField term1
+//  (
+//             IOobject
+//             (
+// 	              "term1",
+// 	              runTime.timeName(),
+// 	              mesh,
+// 	              IOobject::READ_IF_PRESENT,
+// 	              IOobject::AUTO_WRITE
+// 	           ),
+// 	    fvc::grad(gamma)
+//         );
+// volVectorField term2
+//  (
+//             IOobject
+//             (
+// 	              "term2",
+// 	              runTime.timeName(),
+// 	              mesh,
+// 	              IOobject::READ_IF_PRESENT,
+// 	              IOobject::AUTO_WRITE
+// 	           ),
+// 	    fvc::grad(gamma)
+//         );
+
+
+Info<< "Reading field U\n" << endl;
+volVectorField U
+(
+    IOobject
+    (
+        "U",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
+
+#include "createPhi.H"
+Info<< "Reading transportProperties\n" << endl;
+
+IOdictionary transportProperties
+(
+    IOobject
+    (
+        "transportProperties",
+        runTime.constant(),
+        mesh,
+        IOobject::MUST_READ_IF_MODIFIED,
+        IOobject::NO_WRITE
+    )
+);
+
+
+
+Info<< "Reading diffusivity DT\n" << endl;
+
+dimensionedScalar DT
+(
+    transportProperties.lookup("DT")
+);
+
+dimensionedScalar Tr
+(
+    transportProperties.lookup("Tr")
+);
+
+
+dimensionedScalar Ma
+(
+    transportProperties.lookup("Ma")
+);
+
+dimensionedScalar beta
+(
+    transportProperties.lookup("beta")
+);
+
+
+dimensionedScalar Theta
+(
+    transportProperties.lookup("Theta")
+);
+
+
+
+
+//  singlePhaseTransportModel laminarTransport(U, phi);
+
+// autoPtr<incompressible::momentumTransportModel> turbulence
+// (
+//     incompressible::momentumTransportModel::New(U, phi, laminarTransport)
+// );
+
+#include "createMRF.H"
+#include "createFvOptions.H"
