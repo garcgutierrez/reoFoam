@@ -1,0 +1,84 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |				
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8                                   	
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+  // default         CrankNicolson 0.9;
+     	 default         Euler;
+  //       default         backward;
+}
+
+gradSchemes
+{
+
+  // default         Gauss linear;
+    //    grad(p)         Gauss linear;
+
+
+  // default 	     cellLimited Gauss linear 1;
+
+  //    default 	     	cellMDLimited leastSquares 1;
+  default 	     	Gauss linear;
+  //  grad(U) 	     	cellLimited  leastSquares 0.5;
+  grad(cellDisplacement) leastSquares;
+  grad(U) 	         cellLimited Gauss linear 1;// 	cellMDLimited leastSquares 1;
+  grad(gamma) 	         cellLimited Gauss linear 1;// 	cellMDLimited leastSquares 1;;
+   curl(U)  	      cellLimited Gauss linear 1;//leastSquares;
+   curl(curl(U))      cellLimited Gauss linear 1;
+
+}
+
+divSchemes
+{
+  default         none;//Gauss  linear;
+    //div(phi,U)      Gauss linear;
+    //div(phi,U)      Gauss limitedLinearV 1;
+    //div(phi,U)      Gauss linearUpwind default;
+    //    div(phi, U)        Gauss limitedLinear 1;
+     div((U*gamma))        Gauss linear;
+    // div(Dshear)        Gauss limitedLinear 1;
+    // div(Dext)        Gauss limitedLinear 1;
+       div(phi,gamma) Gauss upwind;
+       //div(phi,gamma) Gauss upwind;
+   div((phi-meshPhi),gamma) Gauss upwind;
+   div((phi+meshPhi),gamma) Gauss upwind;
+   div(NodiagT(grad(U))) Gauss linear;
+      div(U) Gauss linear;
+      div(diagT(grad(U))) Gauss linear;
+   //         div(phi-meshPhi(U) ,gamma) Gauss upwind;
+    // div((0.5*(grad(U)+grad(U).T())))    Gauss linear;
+    // div(diagT(grad(U)))      Gauss linear;
+    // div(NodiagT(grad(U)))      Gauss linear;
+    // div((nuEff*dev2(T(grad(U)))))	Gauss linear;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear limited 0.5;
+}
+
+interpolationSchemes
+{
+    default      linear;
+    interpolate(Co) localMax;
+}
+
+snGradSchemes
+{
+    default         Gauss linear limited 0.5;
+}
+
+// ************************************************************************* //

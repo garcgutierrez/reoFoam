@@ -1,0 +1,334 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.02;
+
+R 1.0;
+Escala #calc "(1.0 / 0.2)";
+L #calc "($Escala*43.0/2.0)";
+LL #calc "($Escala*10.0)";
+mSize #calc "-($Escala*25.0-$L)";
+Size #calc "($Escala*25.0+$L / 2.0)";
+xRb #calc "($L+30.0)";
+xRbi #calc "($L+10)";
+xR #calc "($L+10.0)";
+
+
+
+
+//LL 100.0;
+mLL #calc "-$LL";//-100.0;
+
+
+mR -1.0;
+
+
+cos20 #calc "0.939693*$R";
+cos70 #calc "0.34202*$R";
+
+
+mcos20 #calc "0.939693*$R";
+mcos70 #calc "0.34202*$R";
+
+
+
+
+
+
+nRa2 20;
+nRa3 120;
+nRa 220;
+nRb 60;
+
+Rb 50.0;
+//xRb 55.0;
+mRb #calc "-$Rb";
+
+
+
+
+Rcos20 #calc "(0.939693*$Rb)";
+Rcos70 #calc "(0.34202*$Rb)";
+mRcos20 #calc "(-0.939693*$Rb)";
+mRcos70 #calc "(-0.34202*$Rb)";
+
+
+Rcos20_adelantado #calc "($L+0.939693*$Rb)";
+Rcos70_adelantado #calc "($L+0.34202*$Rb)";
+
+
+
+
+cos20_adelantado #calc "($L+0.939693*$R)";
+cos70_adelantado #calc "($L+0.34202*$R)";
+
+
+xesquina #calc "($L + ($R)*0.707107)";
+esquina #calc "(($R)*0.707107)";
+mesquina #calc "(-($R)*0.707107)";
+
+
+esquinaB #calc "(($Rb)*2.12132/3.0)";
+xesquinaB #calc "($L + ($Rb)*2.12132/3.0)";
+mesquinaB #calc "(-($Rb)*2.12132/3.0)";
+
+
+
+
+//Size 100;
+//mSize -50;
+
+vertices
+(
+    //back up
+    ($xR 0 -0.5)                  	//0
+    ($xRb 0 -0.5)                    	//1
+    ($Size 0 -0.5)                   	//2
+    ($Size $esquinaB -0.5)            	//3
+    ($xesquinaB $esquinaB -0.5)      	//4
+    ($xesquina $esquina -0.5)      	//5
+    ($Size $LL -0.5)                   	//6
+    ($xesquinaB $LL -0.5)             	//7
+    (0 $LL -0.5)                    	//8
+    (0 $Rb -0.5)                    	//9
+    (0 $R -0.5)                  	//10
+    ($mR 0 -0.5)                 	//11
+    ($mRb 0 -0.5)                   	//12
+    ($mSize 0 -0.5)                   	//13
+    ($mSize $esquinaB -0.5)            	//14
+    ($mesquinaB $esquinaB -0.5)     	//15
+    ($mesquina $esquina -0.5)     	//16
+    ($mSize $LL -0.5)                   //17
+    ($mesquinaB $LL -0.5)            	//18
+
+    //front up
+    ($xR 0 0.5)                   	//19
+    ($xRb 0 0.5)                     	//20
+    ($Size 0 0.5)                    	//21
+    ($Size $esquinaB 0.5)             	//22
+    ($xesquinaB $esquinaB 0.5)       	//23
+    ($xesquina $esquina 0.5)       	//24
+    ($Size $LL 0.5)                    	//25
+    ($xesquinaB $LL 0.5)              	//26
+    (0 $LL 0.5)                     	//27
+    (0 $Rb 0.5)                     	//28
+    (0 $R 0.5)                   	//29
+    ($mR 0 0.5)                  	//30
+    ($mRb 0 0.5)                    	//31
+    ($mSize 0 0.5)                    	//32
+    ($mSize $esquinaB 0.5)             	//33
+    ($mesquinaB $esquinaB 0.5)      	//34
+    ($mesquina $esquina 0.5)      	//35
+    ($mSize $LL 0.5)                    //36
+    ($mesquinaB $LL 0.5)             	//37
+
+    //back down
+    ($Size $mesquinaB -0.5)            	//38
+    ($xesquinaB $mesquinaB -0.5)      	//39
+    ($xesquina $mesquina -0.5)      	//40
+    ($Size $mLL -0.5)                   //41
+    ($xesquinaB $mLL -0.5)             	//42
+    (0 $mLL -0.5)                    //43
+    (0 $mRb -0.5)                    	//44
+    (0 $mR -0.5)                  	//45
+    ($mSize $mesquinaB -0.5)            	//46
+    ($mesquinaB $mesquinaB -0.5)     	//47
+    ($mesquina $mesquina -0.5)     	//48
+    ($mSize $mLL -0.5)                  //49
+    ($mesquinaB $mLL -0.5)            	//50
+
+    //front down
+    ($Size $mesquinaB 0.5)             	//51
+    ($xesquinaB $mesquinaB 0.5)       	//52
+    ($xesquina $mesquina 0.5)       	//53
+    ($Size $mLL 0.5)                    //54 1
+    ($xesquinaB $mLL 0.5)              	//55
+    (0 $mLL 0.5)                     //56
+    (0 $mRb 0.5)                     	//57
+    (0 $mR 0.5)                   	//58
+    ($mSize $mesquinaB 0.5)             	//59
+    ($mesquinaB $mesquinaB 0.5)      	//60
+    ($mesquina $mesquina 0.5)      	//61
+    ($mSize $mLL 0.5)                   //62
+    ($mesquinaB $mLL 0.5)             	//63
+
+
+    ($L $R -0.5)                  	        	//64
+    ($L $R 0.5)                  	        	//65
+
+
+
+
+    ($L $LL -0.5)                    	//66 ----- 8
+    ($L $Rb -0.5)                    	//67 ------ 9
+
+
+
+    ($L $mLL -0.5)                    //68 -----43
+    ($L $mRb -0.5)                    	//69 -----44
+    ($L $mR -0.5)                  	//70 -----45
+
+
+    ($L $mLL 0.5)                     //71 -----56
+    ($L $mRb 0.5)                     	//72 -----57
+    ($L $mR 0.5)                   	//73 -----58
+
+
+
+    ($L $LL 0.5)                     	//74 -----27
+    ($L $Rb 0.5)                     	//75 -----28
+    ($L $R 0.5)                   	//76 -----29
+
+
+
+    ($L $LL -0.5)                    	//77 -----8
+    ($L $Rb -0.5)                    	//78 -----9
+    ($L $R -0.5)                  	//79 -----10
+
+
+
+
+
+
+);
+
+blocks
+(
+
+ hex (15 16 10 9 34 35 29 28) ($nRa $nRb 1) simpleGrading (0.2 1 1)    	//5si
+ hex (12 11 16 15 31 30 35 34) ($nRa $nRb 1) simpleGrading (0.2 1 1)   	//6
+
+ hex (10 79 78 9 29 76 75 28) (300 $nRa 1) simpleGrading ( (
+							    (0.2 0.6 20)    // 20% y-dir, 30% cells, expansion = 4
+							    (0.4 0.2 1)    // 60% y-dir, 40% cells, expansion = 1
+							    (0.4 0.2 1) // 20% y-dir, 30% cells, expansion = 0.25 (1/4)
+							    ) 5 1)   	//8
+
+);
+
+edges
+(
+    // //up
+   //   arc 0 5 ($cos20_adelantado 0.34202 -0.5)
+   //  arc 5 79 ($cos70_adelantado 0.939693 -0.5)
+   // arc 19 24 ($cos20_adelantado 0.34202 0.5)
+ //   arc 24 76 ($cos70_adelantado 0.939693 0.5)
+
+
+ ///aqui
+ arc 11 16 (-0.939693 0.34202 -0.5)
+ arc 16 10 (-0.34202 0.939693 -0.5)
+ arc 30 35 (-0.939693 0.34202 0.5)
+ arc 35 29 (-0.34202 0.939693 0.5)
+ 
+  arc 15 9 (-0.16666 $Rb -0.5)
+ arc 34 28 (-0.16666 $Rb 0.5)
+ arc 12 15 ($mRb 0.16666 -0.5)
+ arc 31 34 ($mRb 0.16666 0.5)
+
+);
+
+boundary
+(
+
+ out
+ {
+   type patch;
+   faces
+     (
+      (76 79 78 75)
+      );
+    }
+
+     upWall
+     {
+     		type patch;
+     		faces
+     		(
+		 (9 28 75 78)
+    // 		 (74 27 8 77)
+    // 		 //  (7 77 74 26)
+    // 		 //  (6 7 26 25)
+    // 		    (8 18 37 27)
+    // 		    (18 17 36 37)
+ 		);
+     }
+
+     sym1
+     {
+       type            symmetryPlane;
+       faces
+	 (
+	  (30 11 12 31)
+	  );
+     }
+
+    in
+    {
+    		type patch;
+     		faces
+     		(
+     		    //up
+		 (12 15 34 31)
+		 (15 9 28 34)
+
+     	);
+     }
+
+    cylinder
+    {
+     		type wall;
+    		faces
+    		(
+    		    (16 10 29 35)
+    		    (11 16 35 30)
+    		    (29 76 79 10)
+
+     	);
+     }
+
+    	back
+    {
+    		type empty;
+    		faces
+    		(
+		 (16 15 9 10)
+		 (11 12 15 16)
+		 (10 79 78 9)
+     	);
+      }
+
+     	front
+     {
+    		type empty;
+    		faces
+    		(
+
+		 (28 34 35 29)
+     		    (34 31 30 35)
+    		   
+    		    (75 76 29 28)
+    		   
+     	);
+    		      }
+
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //
